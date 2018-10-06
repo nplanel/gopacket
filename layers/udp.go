@@ -42,7 +42,7 @@ func (udp *UDP) DecodeFromBytes(data []byte, df gopacket.DecodeFeedback) error {
 			hlen = len(data)
 		}
 		udp.Payload = data[8:hlen]
-	case udp.Length == 0: // Jumbogram, use entire rest of data
+	case udp.Length == 0 && len(data) >= 8: // Jumbogram, use entire rest of data
 		udp.Payload = data[8:]
 	default:
 		return fmt.Errorf("UDP packet too small: %d bytes", udp.Length)
