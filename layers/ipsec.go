@@ -8,6 +8,7 @@ package layers
 
 import (
 	"encoding/binary"
+	"fmt"
 	"github.com/google/gopacket"
 )
 
@@ -27,6 +28,9 @@ type IPSecAH struct {
 func (i *IPSecAH) LayerType() gopacket.LayerType { return LayerTypeIPSecAH }
 
 func decodeIPSecAH(data []byte, p gopacket.PacketBuilder) error {
+	if len(data) < 12 {
+		return fmt.Errorf("IPsec packet too short")
+	}
 	i := &IPSecAH{
 		ipv6ExtensionBase: ipv6ExtensionBase{
 			NextHeader:   IPProtocol(data[0]),
@@ -37,6 +41,9 @@ func decodeIPSecAH(data []byte, p gopacket.PacketBuilder) error {
 		Seq:      binary.BigEndian.Uint32(data[8:12]),
 	}
 	i.ActualLength = (int(i.HeaderLength) + 2) * 4
+	if len(data) < i.ActualLength {
+		return fmt.Errorf("IPsec packet too short (%d %d)", len(data), i.ActualLength)
+	}
 	i.AuthenticationData = data[12:i.ActualLength]
 	i.Contents = data[:i.ActualLength]
 	i.Payload = data[i.ActualLength:]
