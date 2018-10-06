@@ -219,6 +219,9 @@ func (ipv6 *IPv6) SerializeTo(b gopacket.SerializeBuffer, opts gopacket.Serializ
 
 // DecodeFromBytes implementation according to gopacket.DecodingLayer
 func (ipv6 *IPv6) DecodeFromBytes(data []byte, df gopacket.DecodeFeedback) error {
+	if len(data) < 40 {
+		return errors.New("IPv6 packet too short")
+	}
 	ipv6.Version = uint8(data[0]) >> 4
 	ipv6.TrafficClass = uint8((binary.BigEndian.Uint16(data[0:2]) >> 4) & 0x00FF)
 	ipv6.FlowLabel = binary.BigEndian.Uint32(data[0:4]) & 0x000FFFFF
