@@ -39,17 +39,23 @@ func (arp *ARP) LayerType() gopacket.LayerType { return LayerTypeARP }
 
 // DecodeFromBytes decodes the given bytes into this layer.
 func (arp *ARP) DecodeFromBytes(data []byte, df gopacket.DecodeFeedback) error {
+	if len(data) < 8 {
+		return errors.New("ARP : packet too short")
+	}
 	arp.AddrType = LinkType(binary.BigEndian.Uint16(data[0:2]))
 	arp.Protocol = EthernetType(binary.BigEndian.Uint16(data[2:4]))
 	arp.HwAddressSize = data[4]
 	arp.ProtAddressSize = data[5]
 	arp.Operation = binary.BigEndian.Uint16(data[6:8])
+	arpLength := 8 + 2*arp.HwAddressSize + 2*arp.ProtAddressSize
+	if len(data) < int(arpLength) {
+		return errors.New("ARP : packet too short")
+	}
 	arp.SourceHwAddress = data[8 : 8+arp.HwAddressSize]
 	arp.SourceProtAddress = data[8+arp.HwAddressSize : 8+arp.HwAddressSize+arp.ProtAddressSize]
 	arp.DstHwAddress = data[8+arp.HwAddressSize+arp.ProtAddressSize : 8+2*arp.HwAddressSize+arp.ProtAddressSize]
 	arp.DstProtAddress = data[8+2*arp.HwAddressSize+arp.ProtAddressSize : 8+2*arp.HwAddressSize+2*arp.ProtAddressSize]
 
-	arpLength := 8 + 2*arp.HwAddressSize + 2*arp.ProtAddressSize
 	arp.Contents = data[:arpLength]
 	arp.Payload = data[arpLength:]
 	return nil
